@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import "./GateRush.css";
 import "./GateRushCompat.css";
 
-type Lane = "left" | "right";
+type GateSide = "left" | "right";
 type GameStatus = "ready" | "running" | "won" | "lost";
 
 type Gate = {
@@ -12,7 +18,7 @@ type Gate = {
 };
 
 type Stage = {
-  gates: Record<Lane, Gate>;
+  gates: Record<GateSide, Gate>;
 };
 
 type CrowdDot = {
@@ -24,6 +30,8 @@ const goalCrowd = 120;
 const tickMs = 32;
 const stageDurationMs = 2500;
 const progressStep = tickMs / stageDurationMs;
+const keyboardMoveStep = 0.045;
+const runnerRangeRem = 7.2;
 
 const stages: Stage[] = [
   {
@@ -64,12 +72,16 @@ const stages: Stage[] = [
   },
 ];
 
-function getLaneOffset(lane: Lane): string {
-  return lane === "left" ? "-5.2rem" : "5.2rem";
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
-function getLaneLabel(lane: Lane): string {
-  return lane === "left" ? "Left" : "Right";
+function getGateSide(playerX: number): GateSide {
+  return playerX < 0 ? "left" : "right";
+}
+
+function getSideLabel(side: GateSide): string {
+  return side === "left" ? "Left" : "Right";
 }
 
 function getCrowdDots(crowd: number): CrowdDot[] {
@@ -96,16 +108,24 @@ function getCrowdDots(crowd: number): CrowdDot[] {
   });
 }
 
+function getPointerX(event: ReactPointerEvent<HTMLDivElement>): number {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const normalized = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  return clamp(normalized, -1, 1);
+}
+
 export function GateRush() {
   const [status, setStatus] = useState<GameStatus>("ready");
-  const [lane, setLane] = useState<Lane>("left");
+  const [playerX, setPlayerX] = useState(0);
+  const [keyboardDirection, setKeyboardDirection] = useState(0);
   const [stageIndex, setStageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [crowd, setCrowd] = useState(14);
   const [history, setHistory] = useState<string[]>([]);
 
   const activeStage = stages[Math.min(stageIndex, stages.length - 1)];
-  const selectedGate = activeStage.gates[lane];
+  const selectedSide = getGateSide(playerX);
+  const selectedGate = activeStage.gates[selectedSide];
   const crowdDots = useMemo(() => getCrowdDots(crowd), [crowd]);
   const totalProgress = Math.round(((stageIndex + progress) / stages.length) * 100);
   const laneProgress = Math.min(1, progress);
@@ -115,11 +135,12 @@ export function GateRush() {
   const isFinished = status === "won" || status === "lost";
 
   const sceneStyle = {
-    "--runner-x": getLaneOffset(lane),
+    "--runner-x": `${playerX * runnerRangeRem}rem`,
     "--gate-top": `${gateTop}%`,
     "--gate-scale": gateScale.toFixed(3),
     "--road-shift": `${Math.round(laneProgress * 180)}px`,
     "--runner-scale": runnerScale.toFixed(3),
+    "--player-x": playerX.toFixed(3),
   } as CSSProperties;
 
   useEffect(() => {
@@ -129,30 +150,51 @@ export function GateRush() {
 
     const intervalId = window.setInterval(() => {
       setProgress((currentProgress) => Math.min(1, currentProgress + progressStep));
+      setPlayerX((currentX) => clamp(currentX + keyboardDirection * keyboardMoveStep, -1, 1));
     }, tickMs);
 
     return () => window.clearInterval(intervalId);
-  }, [status]);
+  }, [keyboardDirection, status]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
-        setLane("left");
+        setKeyboardDirection(-1);
       }
 
       if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
-        setLane("right");
+        setKeyboardDirection(1);
       }
 
-      if (event.key === " " && status === "ready") {
+      if (event.key === " ") {
         event.preventDefault();
-        startGame();
+
+        if (status === "ready") {
+          startGame();
+        } else if (isFinished) {
+          resetGame();
+        }
+      }
+    }
+
+    function handleKeyUp(event: KeyboardEvent) {
+      if (
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight" ||
+        event.key.toLowerCase() === "a" ||
+        event.key.toLowerCase() === "d"
+      ) {
+        setKeyboardDirection(0);
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [status]);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isFinished, status]);
 
   useEffect(() => {
     if (status !== "running" || progress < 1) {
@@ -168,18 +210,28 @@ export function GateRush() {
 
   function resetGame() {
     setStatus("ready");
-    setLane("left");
+    setPlayerX(0);
+    setKeyboardDirection(0);
     setStageIndex(0);
     setProgress(0);
     setCrowd(14);
     setHistory([]);
   }
 
+  function moveByPointer(event: ReactPointerEvent<HTMLDivElement>) {
+    if (status !== "running") {
+      return;
+    }
+
+    setPlayerX(getPointerX(event));
+  }
+
   function resolveStage() {
-    const gate = activeStage.gates[lane];
+    const side = getGateSide(playerX);
+    const gate = activeStage.gates[side];
     const nextCrowd = gate.apply(crowd);
     const nextStageIndex = stageIndex + 1;
-    const passedText = `${getLaneLabel(lane)} ${gate.label}: ${crowd} -> ${nextCrowd}`;
+    const passedText = `${getSideLabel(side)} ${gate.label}: ${crowd} -> ${nextCrowd}`;
 
     setCrowd(nextCrowd);
     setHistory((items) => [passedText, ...items].slice(0, 6));
@@ -216,7 +268,15 @@ export function GateRush() {
         </div>
       </div>
 
-      <div className="gate-rush-scene" style={sceneStyle}>
+      <div
+        className="gate-rush-scene"
+        style={sceneStyle}
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          moveByPointer(event);
+        }}
+        onPointerMove={moveByPointer}
+      >
         <div className="skyline" aria-hidden="true">
           <span />
           <span />
@@ -234,35 +294,20 @@ export function GateRush() {
 
         {status === "running" && (
           <div className="gate-pair" aria-label="approaching gates">
-            {(["left", "right"] as Lane[]).map((gateLane) => {
-              const gate = activeStage.gates[gateLane];
+            {(["left", "right"] as GateSide[]).map((gateSide) => {
+              const gate = activeStage.gates[gateSide];
               return (
-                <button
-                  key={gateLane}
-                  type="button"
-                  className={`gate-3d gate-3d--${gateLane} gate-3d--${gate.tone} ${lane === gateLane ? "is-selected" : ""}`}
-                  onClick={() => setLane(gateLane)}
-                  aria-label={`Move to ${gateLane} gate ${gate.label}`}
+                <div
+                  key={gateSide}
+                  className={`gate-3d gate-3d--${gateSide} gate-3d--${gate.tone} ${selectedSide === gateSide ? "is-selected" : ""}`}
+                  aria-label={`${gateSide} gate ${gate.label}`}
                 >
                   <span>{gate.label}</span>
-                </button>
+                </div>
               );
             })}
           </div>
         )}
-
-        <button
-          type="button"
-          className="lane-touch lane-touch--left"
-          onClick={() => setLane("left")}
-          aria-label="Move left"
-        />
-        <button
-          type="button"
-          className="lane-touch lane-touch--right"
-          onClick={() => setLane("right")}
-          aria-label="Move right"
-        />
 
         <div className="runner-pack" aria-label={`Crowd size ${crowd}`}>
           {crowdDots.map((dot) => (
@@ -272,49 +317,31 @@ export function GateRush() {
         </div>
 
         {status === "ready" && (
-          <div className="gate-rush-overlay">
-            <h2>Run through the best gates</h2>
-            <p>Use left/right, A/D, or tap a lane. Reach {goalCrowd}+ people by the finish.</p>
-            <button type="button" onClick={startGame}>
-              Start Run
-            </button>
+          <div className="gate-rush-overlay" onPointerDown={startGame}>
+            <h2>Drag to steer</h2>
+            <p>Drag or swipe horizontally. Keyboard: hold left/right or A/D. Reach {goalCrowd}+ people.</p>
+            <div className="overlay-cta">Tap to start</div>
           </div>
         )}
 
         {isFinished && (
-          <div className="gate-rush-overlay">
+          <div className="gate-rush-overlay" onPointerDown={resetGame}>
             <h2>{status === "won" ? "Clear" : "Failed"}</h2>
             <p>
               {status === "won"
                 ? `Finished with ${crowd} people.`
                 : `Finished with ${crowd} people. Target was ${goalCrowd}.`}
             </p>
-            <button type="button" onClick={resetGame}>
-              Retry
-            </button>
+            <div className="overlay-cta">Tap to retry</div>
           </div>
         )}
       </div>
 
-      <div className="gate-rush-controls">
-        <button
-          type="button"
-          className={lane === "left" ? "is-active" : ""}
-          onClick={() => setLane("left")}
-        >
-          Left
-        </button>
-        <div>
-          <span>Next gate</span>
-          <strong>{selectedGate.label}</strong>
-        </div>
-        <button
-          type="button"
-          className={lane === "right" ? "is-active" : ""}
-          onClick={() => setLane("right")}
-        >
-          Right
-        </button>
+      <div className="gate-rush-readout">
+        <span>Horizontal position</span>
+        <strong>{playerX.toFixed(2)}</strong>
+        <span>Current gate</span>
+        <strong>{selectedGate.label}</strong>
       </div>
 
       {history.length > 0 && (
