@@ -14,6 +14,11 @@ type Stage = {
   gates: Record<Lane, Gate>;
 };
 
+type CrowdDot = {
+  id: number;
+  style: CSSProperties;
+};
+
 const goalCrowd = 120;
 const tickMs = 32;
 const stageDurationMs = 2500;
@@ -66,9 +71,28 @@ function getLaneLabel(lane: Lane): string {
   return lane === "left" ? "Left" : "Right";
 }
 
-function getCrowdDots(crowd: number): number[] {
+function getCrowdDots(crowd: number): CrowdDot[] {
   const count = Math.max(5, Math.min(30, Math.round(crowd / 5)));
-  return Array.from({ length: count }, (_, index) => index);
+
+  return Array.from({ length: count }, (_, index) => {
+    const angle = index * 2.399963;
+    const radius = 9 + (index % 5) * 5 + Math.floor(index / 10) * 3;
+    const left = 50 + Math.cos(angle) * radius * 0.72;
+    const top = 50 + Math.sin(angle) * radius * 0.46;
+    const width = 1.02 + (index % 3) * 0.08;
+    const height = width * 1.28;
+
+    return {
+      id: index,
+      style: {
+        left: `${left}%`,
+        top: `${top}%`,
+        width: `${width}rem`,
+        height: `${height}rem`,
+        zIndex: index,
+      },
+    };
+  });
 }
 
 export function GateRush() {
@@ -241,7 +265,7 @@ export function GateRush() {
 
         <div className="runner-pack" aria-label={`Crowd size ${crowd}`}>
           {crowdDots.map((dot) => (
-            <span key={dot} style={{ "--dot-index": dot } as CSSProperties} />
+            <span key={dot.id} style={dot.style} />
           ))}
           <strong>{crowd}</strong>
         </div>
