@@ -5,9 +5,9 @@ export const games: GameDefinition[] = [
   {
     id: "gate-rush",
     title: "Gate Rush",
-    tagline: "Choose the better gate before the crowd hits zero.",
+    tagline: "Run forward in 3D, switch lanes, and hit the best number gates.",
     description:
-      "A small playable scaffold for the familiar ad-style number gate runner game.",
+      "A playable 3D-style number gate runner: steer left or right, grow the crowd, and reach the finish target.",
     component: GateRush,
   },
 ];
