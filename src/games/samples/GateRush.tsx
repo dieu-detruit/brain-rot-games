@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import "./GateRush.css";
+import "./GateRushCompat.css";
 
 type Lane = "left" | "right";
 type GameStatus = "ready" | "running" | "won" | "lost";
