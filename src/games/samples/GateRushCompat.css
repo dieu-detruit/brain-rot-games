@@ -1,3 +1,17 @@
+.gate-rush-scene {
+  cursor: grab;
+  touch-action: none;
+}
+
+.gate-rush-scene:active {
+  cursor: grabbing;
+}
+
+.gate-3d {
+  cursor: default;
+  pointer-events: none;
+}
+
 .runner-pack span {
   position: absolute;
   border-radius: 999px 999px 0.45rem 0.45rem;
@@ -6,4 +20,50 @@
     inset 0 0.18rem 0 rgba(255, 255, 255, 0.8),
     0 0.35rem 0 rgba(2, 6, 23, 0.55);
   transform: translate(-50%, -50%);
+}
+
+.gate-rush-overlay {
+  cursor: pointer;
+}
+
+.overlay-cta {
+  display: inline-grid;
+  place-items: center;
+  min-height: 3.2rem;
+  padding: 0 1.35rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #020617;
+  font-weight: 950;
+}
+
+.gate-rush-readout {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gate-rush-readout span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gate-rush-readout strong {
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 950;
+}
+
+@media (max-width: 640px) {
+  .gate-rush-readout {
+    grid-template-columns: 1fr 1fr;
+  }
 }
