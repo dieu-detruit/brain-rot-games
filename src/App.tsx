@@ -19,9 +19,10 @@ function toGamePath(gameId: string): string {
 export function App() {
   const gameId = getGameIdFromPath();
   const selectedGame = findGame(gameId);
-  const SelectedGame = selectedGame?.component;
 
-  if (SelectedGame) {
+  if (selectedGame) {
+    const SelectedGame = selectedGame.component;
+
     return (
       <main className="app app--game">
         <nav className="top-nav" aria-label="site navigation">
@@ -46,10 +47,10 @@ export function App() {
     <main className="app">
       <section className="hero">
         <p className="eyebrow">Brain Rot Games</p>
-        <h1>よく見るけど実際には遊べない広告ゲームを遊べるようにする場所</h1>
+        <h1>Playable ad-style mini games</h1>
         <p>
-          ゲームはパスごとに切り替わります。新しいゲームを追加するときは
-          <code>src/games/registry.tsx</code> に登録します。
+          Games are selected by path. Add a new entry to
+          <code>src/games/registry.tsx</code> to register another game.
         </p>
       </section>
 
