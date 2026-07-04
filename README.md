@@ -21,6 +21,7 @@ npm run preview
 GitHub Pages 上では次のようなパスでゲームを切り替えます。
 
 - `/brain-rot-games/` — ゲーム一覧
+- `/brain-rot-games/binary-sketch` — 白黒2値のお絵描きアプリ
 - `/brain-rot-games/gate-rush` — サンプルゲーム
 
 ルーティングライブラリはまだ入れていません。`window.location.pathname` を直接読んで、`src/games/registry.tsx` の `id` と照合しています。
