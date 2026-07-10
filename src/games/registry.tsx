@@ -1,8 +1,17 @@
 import type { GameDefinition } from "./types";
 import { BinarySketch } from "./drawing/BinarySketch";
 import { GateRush } from "./samples/GateRush";
+import { WordStream } from "./word-stream/WordStream";
 
 export const games: GameDefinition[] = [
+  {
+    id: "word-stream",
+    title: "Word Stream",
+    tagline: "Hear English and Japanese word pairs on an adjustable loop.",
+    description:
+      "A Web Speech API demo that reads 500 word pairs in an English, Japanese, English, Japanese sequence before choosing the next word at random.",
+    component: WordStream,
+  },
   {
     id: "binary-sketch",
     title: "Binary Sketch",

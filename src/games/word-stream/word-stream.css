@@ -1,0 +1,150 @@
+.word-stream {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.word-stream__display {
+  min-height: 360px;
+  padding: clamp(24px, 6vw, 56px);
+  border: 2px solid #111;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #fffdf2, #f2f4ff);
+  box-shadow: 10px 10px 0 #111;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.word-stream__status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.word-stream__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.word-stream__status::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #888;
+  content: "";
+}
+
+.word-stream__status--playing::before {
+  background: #22a447;
+}
+
+.word-stream__status--paused::before {
+  background: #e9a100;
+}
+
+.word-stream__step {
+  margin: 52px 0 8px;
+  color: #5b4dd8;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.word-stream__display h2 {
+  margin: 0;
+  font-size: clamp(3rem, 10vw, 7rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.word-stream__translation {
+  margin: 22px 0 0;
+  color: #555;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+}
+
+.word-stream__counter {
+  margin: 34px 0 0;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.word-stream__controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.word-stream__controls label {
+  padding: 18px;
+  border: 1px solid #ccc;
+  border-radius: 16px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.word-stream__controls output {
+  color: #5b4dd8;
+}
+
+.word-stream__controls input {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.word-stream__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.word-stream__buttons button {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.word-stream__buttons button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.word-stream__buttons .word-stream__primary {
+  background: #111;
+  color: #fff;
+}
+
+.word-stream__note {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 620px) {
+  .word-stream__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .word-stream__display {
+    min-height: 300px;
+    box-shadow: 6px 6px 0 #111;
+  }
+}
