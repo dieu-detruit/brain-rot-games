@@ -52,10 +52,26 @@ function wait(milliseconds: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+function selectVoice(
+  voices: SpeechSynthesisVoice[],
+  language: SequenceLanguage,
+): SpeechSynthesisVoice | undefined {
+  const locale = language === "en" ? "en-US" : "ja-JP";
+  const prefix = language === "en" ? "en" : "ja";
+
+  return (
+    voices.find((voice) => voice.lang === locale && voice.localService) ??
+    voices.find((voice) => voice.lang === locale) ??
+    voices.find((voice) => voice.lang.toLowerCase().startsWith(prefix) && voice.localService) ??
+    voices.find((voice) => voice.lang.toLowerCase().startsWith(prefix))
+  );
+}
+
 function speak(
   text: string,
   language: SequenceLanguage,
   rate: number,
+  voices: SpeechSynthesisVoice[],
   signal: AbortSignal,
 ): Promise<void> {
   return new Promise((resolve) => {
@@ -66,6 +82,7 @@ function speak(
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = language === "en" ? "en-US" : "ja-JP";
+    utterance.voice = selectVoice(voices, language) ?? null;
     utterance.rate = rate;
     utterance.onend = () => resolve();
     utterance.onerror = () => resolve();
@@ -95,6 +112,7 @@ export function WordStream() {
   const currentIndexRef = useRef(currentIndex);
   const intervalRef = useRef(intervalSeconds);
   const rateRef = useRef(speechRate);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   const currentWord: WordPair = wordPairs[currentIndex];
   const currentLanguage = sequence[sequenceIndex];
@@ -114,6 +132,18 @@ export function WordStream() {
   useEffect(() => {
     rateRef.current = speechRate;
   }, [speechRate]);
+
+  useEffect(() => {
+    const updateVoices = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+
+    updateVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", updateVoices);
+    };
+  }, []);
 
   const stopCurrentRun = useCallback(() => {
     controllerRef.current?.abort();
@@ -144,6 +174,7 @@ export function WordStream() {
         language === "en" ? pair.en : pair.ja,
         language,
         rateRef.current,
+        voicesRef.current,
         controller.signal,
       );
 
@@ -173,6 +204,7 @@ export function WordStream() {
       return;
     }
 
+    voicesRef.current = window.speechSynthesis.getVoices();
     stateRef.current = "playing";
     setPlaybackState("playing");
     void run();
@@ -279,7 +311,7 @@ export function WordStream() {
       </div>
 
       <p className="word-stream__note">
-        Startはユーザー操作から呼び出されます。iPhoneでは消音モードや画面ロック中の挙動がブラウザにより異なります。
+        英語は英語音声、日本語は日本語音声を優先して再生します。iPhoneでは消音モードや画面ロック中の挙動がブラウザにより異なります。
       </p>
     </section>
   );
