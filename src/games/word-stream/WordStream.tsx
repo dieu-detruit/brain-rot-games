@@ -168,8 +168,8 @@ export function WordStream() {
   }, [stopCurrentRun]);
 
   const start = () => {
-    if (!("speechSynthesis" in window)) {
-      window.alert("このブラウザはWeb Speech APIの音声合成に対応していません。");
+    if (typeof window.speechSynthesis === "undefined") {
+      alert("このブラウザはWeb Speech APIの音声合成に対応していません。");
       return;
     }
 
