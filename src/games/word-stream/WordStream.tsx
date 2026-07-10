@@ -1,11 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { wordPairs, type WordPair } from "./words";
+import wordsSource from "./words.ts?raw";
 import "./word-stream.css";
+
+type WordPair = {
+  en: string;
+  ja: string;
+};
 
 type PlaybackState = "idle" | "playing" | "paused";
 
 const sequence = ["en", "ja", "en", "ja"] as const;
 type SequenceLanguage = (typeof sequence)[number];
+
+const rawWordsMatch = wordsSource.match(/const rawWords = `([\s\S]*?)`\.trim\(\);/);
+if (!rawWordsMatch) {
+  throw new Error("Could not parse the bundled word list");
+}
+
+const wordPairs: WordPair[] = rawWordsMatch[1]
+  .trim()
+  .split("\n")
+  .slice(0, 500)
+  .map((line) => {
+    const [en, ja] = line.split("\t");
+    return { en, ja };
+  });
 
 function randomIndex(excluding: number | null): number {
   if (wordPairs.length <= 1) {
