@@ -1,9 +1,18 @@
 import type { GameDefinition } from "./types";
 import { BinarySketch } from "./drawing/BinarySketch";
+import { ArmWorkoutTracker } from "./fitness/ArmWorkoutTracker";
 import { GateRush } from "./samples/GateRush";
 import { WordStream } from "./word-stream/WordStream";
 
 export const games: GameDefinition[] = [
+  {
+    id: "arm-workout",
+    title: "Arm Workout Tracker",
+    tagline: "Log every set quickly and sync it to Google Sheets.",
+    description:
+      "A mobile-first arm workout logger with automatic local saving, optional Google Sheets sync, and JSON or CSV export for ChatGPT analysis.",
+    component: ArmWorkoutTracker,
+  },
   {
     id: "word-stream",
     title: "Word Stream",
